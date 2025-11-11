@@ -25,7 +25,7 @@ public class Botones {
     public void activarSonido() {
         if (sonido == false) {
             if (presionado == true) {
-                System.out.println("boton presionado, sonar");
+                System.out.println("boton presionado, sonando...");
                 return;
             }
             sonido = true;
@@ -34,6 +34,10 @@ public class Botones {
             sonido = false;
             System.out.println("Sonido desactivado");
         }
+    }
+    public void presionarBoton() {
+        presionado = true;
+        System.out.println("Boton presionado");
     }
 
 }
