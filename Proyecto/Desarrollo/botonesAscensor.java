@@ -1,6 +1,7 @@
 public class botonesAscensor extends Botones {
 
     private int pisoDestino;
+    private Puertas puertas;
 
     public botonesAscensor(boolean presionado, boolean luz, boolean sonido, int pisoDestino) {
         super(presionado, luz, sonido);
@@ -12,6 +13,7 @@ public class botonesAscensor extends Botones {
                 this.pisoDestino = pisoDestino;
             }
         } while (pisoDestino < 1 || pisoDestino > 5);
+        this.puertas = new Puertas();
     }
 
     public int seleccionarPiso() {
@@ -23,6 +25,7 @@ public class botonesAscensor extends Botones {
     }
 
     public void mantenerPuertasAbiertas() {
+        puertas.abrirPuerta();
         presionarBoton();
         iluminar();
         activarSonido();

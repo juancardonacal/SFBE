@@ -2,6 +2,7 @@ public class Ascensor {
 
     private int pisoActual;
     private Puertas puertas;
+    private botonesAscensor botones;
     public Ascensor(int pisoActual) {
         do {
             if (pisoActual >= 1 && pisoActual <= 5) {
@@ -11,6 +12,7 @@ public class Ascensor {
             }
         } while (pisoActual < 1 || pisoActual > 5);
         this.puertas = new Puertas();
+        this.botones = new botonesAscensor(false, false, false, pisoActual);
     }
 
     public void irAPiso(int pisoDestino) {
@@ -34,11 +36,17 @@ public class Ascensor {
         puertas.cerrarPuerta();
     }
 
-    public void mantenerPuertasAbiertas() {
-        puertas.abrirPuerta();
+    public void botonMantenerPuertasAbiertas() {
+        botones.mantenerPuertasAbiertas();
         System.out.println("Manteniendo puertas abiertas");
     }
 
-    
+    public boolean unObstaculoEnLaPuerta() {
+        return puertas.unObstaculoEnLaPuerta();
+    }
+
+    public boolean quitarObstaculo() {
+        return puertas.quitarObstaculo();
+    }
 
 }

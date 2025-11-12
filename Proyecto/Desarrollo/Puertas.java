@@ -1,7 +1,10 @@
 public class Puertas {
 
+    private boolean obstaculo;
+
     private boolean abierta;
     public Puertas() {
+        this.obstaculo = false;
         this.abierta = false;
     }
 
@@ -19,6 +22,28 @@ public class Puertas {
             System.out.println("Puerta cerrada");
         } else {
             System.out.println("La puerta ya está cerrada");
+        }
+    }
+
+    public boolean unObstaculoEnLaPuerta() {
+        // Simulación de detección de obstáculo
+        if (obstaculo) {
+            System.out.println("Obstáculo detectado en la puerta");
+            return true;
+        } else {
+            System.out.println("No hay obstáculos en la puerta");
+            return false;
+        }
+    }
+
+    public boolean quitarObstaculo() {
+        if (obstaculo) {
+            obstaculo = false;
+            System.out.println("Obstáculo retirado de la puerta");
+            return true;
+        } else {
+            System.out.println("No hay obstáculos para retirar");
+            return false;
         }
     }
 }
