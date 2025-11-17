@@ -1,4 +1,4 @@
-public class Botones {
+public abstract class Botones {
 
     protected boolean presionado;
     protected boolean Luz;
@@ -39,5 +39,6 @@ public class Botones {
         presionado = true;
         System.out.println("Boton presionado");
     }
+    
 
 }
