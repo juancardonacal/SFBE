@@ -36,4 +36,14 @@ Lógica de movimiento: Me costó bastante afinar el algoritmo para que el ascens
 
 SimulacionAscensor.java (El Main / Menú) Aquí el enfoque fue totalmente la experiencia de usuario. Quería que se sintiera como estar ahí. Lo más complicado fue manejar los dos estados: "Estar fuera" y "Estar dentro". Tuve que crear menús dinámicos que cambian según dónde está el usuario. También fue bastante complicado validar todas las entradas para que el programa no fallara si el usuario ponía un piso que no existe o intentaba subir desde el piso 5. Fue mucho trabajo con los if/else y los bucles para que la navegación fuera fluida.
 
+diagrama
+
 ![alt text](diagrama-elevador.drawio.png)
+
+
+EJECUCION
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
+![alt text](image-5.png)
