@@ -2,118 +2,152 @@ public class SistemaControl {
 
     private Ascensor ascensor;
 
-    // Botones externos (uno por piso)
-    private BotonPiso botonPiso1;
-    private BotonPiso botonPiso2;
-    private BotonPiso botonPiso3;
-    private BotonPiso botonPiso4;
-    private BotonPiso botonPiso5;
+    // Solicitud externa
+    private int solicitudExternaPiso;        
+    private String solicitudExternaDireccion; // "subir", "bajar", "ninguna"
 
-    // Botones internos (dentro del ascensor)
-    private BotonAscensor botonA1;
-    private BotonAscensor botonA2;
-    private BotonAscensor botonA3;
-    private BotonAscensor botonA4;
-    private BotonAscensor botonA5;
+    // Solicitud interna
+    private int solicitudInternaDestino;     
 
-    // Solicitud actual
-    private int solicitudActual;   // 0 = ninguna
+    // Dirección actual del ascensor
+    private String direccionAscensor; // "subir", "bajar", "ninguna"
 
-    private String direccionActual;  // "subir", "bajar", "ninguna"
 
+    // -----------------------------------
+    //         CONSTRUCTOR
+    // -----------------------------------
     public SistemaControl(Ascensor ascensor) {
         this.ascensor = ascensor;
-        this.direccionActual = "ninguna";
-        this.solicitudActual = 0; 
 
-        // Crear botones de piso
-        botonPiso1 = new BotonPiso(1);
-        botonPiso2 = new BotonPiso(2);
-        botonPiso3 = new BotonPiso(3);
-        botonPiso4 = new BotonPiso(4);
-        botonPiso5 = new BotonPiso(5);
+        this.solicitudExternaPiso = 0;
+        this.solicitudExternaDireccion = "ninguna";
 
-        // Crear botones internos
-        botonA1 = new BotonAscensor(1);
-        botonA2 = new BotonAscensor(2);
-        botonA3 = new BotonAscensor(3);
-        botonA4 = new BotonAscensor(4);
-        botonA5 = new BotonAscensor(5);
+        this.solicitudInternaDestino = 0;
+
+        // Ascensor inicia sin dirección
+        this.direccionAscensor = "ninguna";
     }
 
 
-    // Botones externos de piso
-    public void presionarBotonPiso(int piso) {
+    // ============================================================
+    //           BOTONES EXTERNOS (subir / bajar)
+    // ============================================================
 
+    public void presionarSubir(int piso) {
         if (piso < 1 || piso > 5) {
             System.out.println("Piso inválido.");
             return;
         }
 
-        System.out.println("[CONTROL] Botón externo del piso " + piso + " presionado.");
+        solicitudExternaPiso = piso;
+        solicitudExternaDireccion = "subir";
 
-        solicitudActual = piso;  // Solo guardamos una solicitud a la vez
+        System.out.println("[CONTROL] Solicitud externa en piso " + piso + " (subir)");
+    }
+
+    public void presionarBajar(int piso) {
+        if (piso < 1 || piso > 5) {
+            System.out.println("Piso inválido.");
+            return;
+        }
+
+        solicitudExternaPiso = piso;
+        solicitudExternaDireccion = "bajar";
+
+        System.out.println("[CONTROL] Solicitud externa en piso " + piso + " (bajar)");
     }
 
 
-    // Boton interno del ascensor
-    public void presionarBotonAscensor(int destino) {
+    // ============================================================
+    //           BOTÓN INTERNO DEL ASCENSOR
+    // ============================================================
 
+    public void presionarInterno(int destino) {
         if (destino < 1 || destino > 5) {
             System.out.println("Destino inválido.");
             return;
         }
 
-        System.out.println("[CONTROL] Botón interno del ascensor: ir al piso " + destino);
-
-        solicitudActual = destino;
+        solicitudInternaDestino = destino;
+        System.out.println("[CONTROL] Botón interno: destino " + destino);
     }
 
 
-    // Procesar la solicitud actual
+    // ============================================================
+    //           PROCESAR SOLICITUDES
+    // ============================================================
 
-    public void procesarSolicitud() {
+    public void procesar() {
 
-        if (solicitudActual == 0) {
-            System.out.println("[CONTROL] No hay solicitudes pendientes.");
+        // PRIORIDAD 1 → Si no hay dirección y hay solicitud externa
+        if (direccionAscensor.equals("ninguna") && haySolicitudExterna()) {
+
+            actualizarDireccion(solicitudExternaPiso);
+            moverAscensor(solicitudExternaPiso);
+
+            ascensor.abrirPuertas();
+            if (!ascensor.unObstaculoEnLaPuerta()) {
+                ascensor.cerrarPuertas();
+            }
+
+            // limpiar solicitud externa
+            solicitudExternaPiso = 0;
+            solicitudExternaDireccion = "ninguna";
+
             return;
         }
 
-        actualizarDireccion(solicitudActual);
+        // PRIORIDAD 2 → Solicitud interna
+        if (haySolicitudInterna()) {
 
-        int pisoDestino = solicitudActual;
-        solicitudActual = 0; // limpiamos la solicitud
+            actualizarDireccion(solicitudInternaDestino);
+            moverAscensor(solicitudInternaDestino);
 
-        System.out.println("[CONTROL] Moviendo ascensor hacia el piso " + pisoDestino);
+            ascensor.abrirPuertas();
+            if (!ascensor.unObstaculoEnLaPuerta()) {
+                ascensor.cerrarPuertas();
+            }
 
-        ascensor.irAPiso(pisoDestino);
-        ascensor.abrirPuertas();
+            solicitudInternaDestino = 0;
+            direccionAscensor = "ninguna";
 
-        if (ascensor.unObstaculoEnLaPuerta()) {
-            System.out.println("[CONTROL] Obstáculo detectado.");
             return;
         }
 
-        ascensor.cerrarPuertas();
-        direccionActual = "ninguna";
+        // PRIORIDAD 3 → Nada pendiente
+        System.out.println("[CONTROL] No hay solicitudes.");
+        direccionAscensor = "ninguna";
     }
 
 
-    // Actualizar la dirección del ascensor
+    // ============================================================
+    //           MÉTODOS AUXILIARES
+    // ============================================================
 
-    private void actualizarDireccion(int pisoDestino) {
-
-        int pisoActual = ascensor.getPisoActual();
-
-        if (pisoDestino > pisoActual) direccionActual = "subir";
-        else if (pisoDestino < pisoActual) direccionActual = "bajar";
-        else direccionActual = "ninguna";
-
-        System.out.println("[CONTROL] Dirección: " + direccionActual);
+    private boolean haySolicitudExterna() {
+        return solicitudExternaPiso != 0;
     }
 
-    public boolean haySolicitud() {
-        return solicitudActual != 0;
+    private boolean haySolicitudInterna() {
+        return solicitudInternaDestino != 0;
+    }
+
+    private void actualizarDireccion(int destino) {
+
+        int actual = ascensor.getPisoActual();
+
+        if (destino > actual)
+            direccionAscensor = "subir";
+        else if (destino < actual)
+            direccionAscensor = "bajar";
+        else
+            direccionAscensor = "ninguna";
+
+        System.out.println("[CONTROL] Dirección: " + direccionAscensor);
+    }
+
+    private void moverAscensor(int destino) {
+        System.out.println("[CONTROL] Moviendo ascensor hacia piso " + destino + "...");
+        ascensor.irAPiso(destino);
     }
 }
-
