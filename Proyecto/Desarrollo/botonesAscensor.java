@@ -1,32 +1,36 @@
 public class botonesAscensor extends Botones {
 
     private int pisoDestino;
-    private Puertas puertas;
 
     public botonesAscensor(boolean presionado, boolean luz, boolean sonido, int pisoDestino) {
-        super(presionado, luz, sonido);
+        super(); // Llama al constructor de la clase padre (Botones)
+        
         if (pisoDestino < 1 || pisoDestino > 5) {
-            System.out.println("Piso inválido. El piso debe estar entre 1 y 5. Se asignará el piso 1 por defecto.");
-            this.pisoDestino = 1; // Asignar un valor predeterminado válido
+            this.pisoDestino = 1;
         } else {
             this.pisoDestino = pisoDestino;
         }
-        this.puertas = new Puertas();
     }
 
+    // Método para seleccionar un piso desde adentro
     public int seleccionarPiso() {
-        presionarBoton();
-        iluminar();
-        activarSonido();
-        System.out.println("Piso " + pisoDestino + " seleccionado");
+        System.out.println("[Panel Interno] Seleccionando piso " + pisoDestino + "...");
+        
+        // IMPORTANTE: Llamamos a este método del padre para activar Luz y Sonido
+        presionarBoton(); 
+        
         return pisoDestino;
     }
 
+    // Método para el botón de mantener puertas abiertas
     public void mantenerPuertasAbiertas() {
-        puertas.abrirPuerta();
-        presionarBoton();
-        iluminar();
-        activarSonido();
-        System.out.println("Manteniendo puertas abiertas");
+        System.out.println("[Panel Interno] Presionando botón Mantener Puertas...");
+        
+        // IMPORTANTE: También activa luz y sonido
+        presionarBoton(); 
+    }
+    
+    public int getPisoDestino() {
+        return pisoDestino;
     }
 }

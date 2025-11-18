@@ -4,41 +4,41 @@ public abstract class Botones {
     protected boolean Luz;
     protected boolean sonido;
 
-    public Botones(boolean presionado, boolean luz, boolean sonido) {
+    public Botones() {
         this.presionado = false;
         this.Luz = false;
         this.sonido = false;
     }
 
     public void iluminar() {
-        if (Luz == false) {
-            Luz = true;
-            System.out.println("Luz encendida");
-        } else {
-            Luz = false;
-            System.out.println("Luz apagada");
-    }
-
-
+        this.Luz = true;
+        // ESTE MENSAJE DEBE SALIR AL PRESIONAR
+        System.out.println("   >>> [LUZ] El botón se ha ILUMINADO (ON) <<<");
     }
 
     public void activarSonido() {
-        if (sonido == false) {
-            if (presionado == true) {
-                System.out.println("boton presionado, sonando...");
-                return;
-            }
-            sonido = true;
-            System.out.println("Sonido activado");
-        } else {
-            sonido = false;
-            System.out.println("Sonido desactivado");
-        }
+        this.sonido = true;
+        // ESTE MENSAJE DEBE SALIR AL PRESIONAR
+        System.out.println("   >>> [SONIDO] *BEEP* Botón presionado <<<");
     }
+
+    // Este método activa todo a la vez
     public void presionarBoton() {
-        presionado = true;
-        System.out.println("Boton presionado");
+        this.presionado = true;
+        activarSonido(); // Llama al sonido
+        iluminar();      // Llama a la luz
+    }
+
+    // Este método apaga todo
+    public void reiniciar() {
+        this.presionado = false;
+        this.Luz = false;
+        this.sonido = false;
+        // ESTE MENSAJE DEBE SALIR AL LLEGAR EL ASCENSOR
+        System.out.println("   >>> [LUZ] Solicitud atendida. El botón se ha APAGADO (OFF) <<<");
     }
     
-
+    public boolean estaPresionado() {
+        return presionado;
+    }
 }

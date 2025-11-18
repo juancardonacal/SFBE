@@ -1,153 +1,184 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class SistemaControl {
 
     private Ascensor ascensor;
+    private Piso[] pisos; 
 
-    // Solicitud externa
-    private int solicitudExternaPiso;        
-    private String solicitudExternaDireccion; // "subir", "bajar", "ninguna"
+    private List<Integer> destinosInternos; 
+    private List<Integer> solicitudesExternasSubir; 
+    private List<Integer> solicitudesExternasBajar; 
 
-    // Solicitud interna
-    private int solicitudInternaDestino;     
+    private String direccionAscensor; 
 
-    // Dirección actual del ascensor
-    private String direccionAscensor; // "subir", "bajar", "ninguna"
-
-
-    // -----------------------------------
-    //         CONSTRUCTOR
-    // -----------------------------------
-    public SistemaControl(Ascensor ascensor) {
+    public SistemaControl(Ascensor ascensor, Piso[] pisos) {
         this.ascensor = ascensor;
+        this.pisos = pisos; 
 
-        this.solicitudExternaPiso = 0;
-        this.solicitudExternaDireccion = "ninguna";
+        this.destinosInternos = new ArrayList<>();
+        this.solicitudesExternasSubir = new ArrayList<>();
+        this.solicitudesExternasBajar = new ArrayList<>();
 
-        this.solicitudInternaDestino = 0;
-
-        // Ascensor inicia sin dirección
-        this.direccionAscensor = "ninguna";
+        this.direccionAscensor = "NINGUNA";
     }
 
-
-    // ============================================================
-    //           BOTONES EXTERNOS (subir / bajar)
-    // ============================================================
-
+    // --- BOTONES EXTERNOS ---
     public void presionarSubir(int piso) {
-        if (piso < 1 || piso > 5) {
-            System.out.println("Piso inválido.");
-            return;
+        if (piso < 1 || piso > 5 || piso == 5) return;
+        Piso pisoObj = pisos[piso - 1]; 
+        pisoObj.getBotonSubir().subir(); // Enciende luz externa
+        
+        if (!solicitudesExternasSubir.contains(piso)) {
+            solicitudesExternasSubir.add(piso);
+            Collections.sort(solicitudesExternasSubir); 
         }
-
-        solicitudExternaPiso = piso;
-        solicitudExternaDireccion = "subir";
-
-        System.out.println("[CONTROL] Solicitud externa en piso " + piso + " (subir)");
+        System.out.println("Sistema: Solicitud externa registrada (Piso " + piso + " UP)");
     }
 
     public void presionarBajar(int piso) {
-        if (piso < 1 || piso > 5) {
-            System.out.println("Piso inválido.");
-            return;
+        if (piso < 1 || piso > 5 || piso == 1) return;
+        Piso pisoObj = pisos[piso - 1]; 
+        pisoObj.getBotonBajar().bajar(); // Enciende luz externa
+        
+        if (!solicitudesExternasBajar.contains(piso)) {
+            solicitudesExternasBajar.add(piso);
+            Collections.sort(solicitudesExternasBajar, Collections.reverseOrder()); 
         }
-
-        solicitudExternaPiso = piso;
-        solicitudExternaDireccion = "bajar";
-
-        System.out.println("[CONTROL] Solicitud externa en piso " + piso + " (bajar)");
+        System.out.println("Sistema: Solicitud externa registrada (Piso " + piso + " DOWN)");
     }
 
-
-    // ============================================================
-    //           BOTÓN INTERNO DEL ASCENSOR
-    // ============================================================
-
+    // --- BOTONES INTERNOS (AQUÍ ESTABA EL POSIBLE PROBLEMA) ---
     public void presionarInterno(int destino) {
-        if (destino < 1 || destino > 5) {
-            System.out.println("Destino inválido.");
-            return;
-        }
+        if (destino < 1 || destino > 5) return;
+        
+        // LÍNEA OBLIGATORIA: Enciende la luz del botón DENTRO del ascensor
+        ascensor.presionarBoton(destino); 
 
-        solicitudInternaDestino = destino;
-        System.out.println("[CONTROL] Botón interno: destino " + destino);
+        if (!destinosInternos.contains(destino)) {
+            destinosInternos.add(destino);
+            Collections.sort(destinosInternos); 
+        }
+        System.out.println("Sistema: Destino interno " + destino + " registrado en memoria.");
+    }
+    
+    public void presionarMantenerPuertasAbiertas() {
+        System.out.println("Manteniendo puertas...");
+        ascensor.abrirPuertas();
     }
 
-
-    // ============================================================
-    //           PROCESAR SOLICITUDES
-    // ============================================================
-
+    // --- LÓGICA DE PROCESAMIENTO ---
     public void procesar() {
-
-        // PRIORIDAD 1 → Si no hay dirección y hay solicitud externa
-        if (direccionAscensor.equals("ninguna") && haySolicitudExterna()) {
-
-            actualizarDireccion(solicitudExternaPiso);
-            moverAscensor(solicitudExternaPiso);
-
-            ascensor.abrirPuertas();
-            if (!ascensor.unObstaculoEnLaPuerta()) {
-                ascensor.cerrarPuertas();
-            }
-
-            // limpiar solicitud externa
-            solicitudExternaPiso = 0;
-            solicitudExternaDireccion = "ninguna";
-
+        if (destinosInternos.isEmpty() && solicitudesExternasSubir.isEmpty() && solicitudesExternasBajar.isEmpty()) {
+            direccionAscensor = "NINGUNA";
             return;
         }
+        if (direccionAscensor.equals("NINGUNA")) {
+            direccionAscensor = determinarDireccionInicial();
+            if (direccionAscensor.equals("NINGUNA")) return;
+        }
+        
+        int pisoActual = ascensor.getPisoActual();
+        System.out.println("\n>> PROCESANDO: Piso " + pisoActual + " | Dirección " + direccionAscensor);
 
-        // PRIORIDAD 2 → Solicitud interna
-        if (haySolicitudInterna()) {
-
-            actualizarDireccion(solicitudInternaDestino);
-            moverAscensor(solicitudInternaDestino);
-
-            ascensor.abrirPuertas();
-            if (!ascensor.unObstaculoEnLaPuerta()) {
-                ascensor.cerrarPuertas();
-            }
-
-            solicitudInternaDestino = 0;
-            direccionAscensor = "ninguna";
-
-            return;
+        if (debeParar(pisoActual, direccionAscensor)) {
+            atenderSolicitud(pisoActual, direccionAscensor);
+            return; 
         }
 
-        // PRIORIDAD 3 → Nada pendiente
-        System.out.println("[CONTROL] No hay solicitudes.");
-        direccionAscensor = "ninguna";
+        if (direccionAscensor.equals("ARRIBA")) {
+            if (haySolicitudesEnDireccion("ARRIBA")) {
+                if (pisoActual < 5) ascensor.irAPiso(pisoActual + 1); 
+            } else {
+                System.out.println("Fin de ruta SUBIDA. Cambiando a BAJAR.");
+                direccionAscensor = "ABAJO"; 
+            }
+        } else if (direccionAscensor.equals("ABAJO")) {
+            if (haySolicitudesEnDireccion("ABAJO")) {
+                if (pisoActual > 1) ascensor.irAPiso(pisoActual - 1); 
+            } else {
+                System.out.println("Fin de ruta BAJADA. Cambiando a SUBIR.");
+                direccionAscensor = "ARRIBA"; 
+            }
+        }
     }
 
-
-    // ============================================================
-    //           MÉTODOS AUXILIARES
-    // ============================================================
-
-    private boolean haySolicitudExterna() {
-        return solicitudExternaPiso != 0;
-    }
-
-    private boolean haySolicitudInterna() {
-        return solicitudInternaDestino != 0;
-    }
-
-    private void actualizarDireccion(int destino) {
-
+    private String determinarDireccionInicial() {
         int actual = ascensor.getPisoActual();
-
-        if (destino > actual)
-            direccionAscensor = "subir";
-        else if (destino < actual)
-            direccionAscensor = "bajar";
-        else
-            direccionAscensor = "ninguna";
-
-        System.out.println("[CONTROL] Dirección: " + direccionAscensor);
+        boolean arriba = false, abajo = false;
+        for (int p : destinosInternos) { if (p > actual) arriba = true; if (p < actual) abajo = true; }
+        for (int p : solicitudesExternasSubir) { if (p > actual) arriba = true; if (p < actual) abajo = true; }
+        for (int p : solicitudesExternasBajar) { if (p > actual) arriba = true; if (p < actual) abajo = true; }
+        if (arriba) return "ARRIBA";
+        if (abajo) return "ABAJO";
+        return "NINGUNA";
     }
 
-    private void moverAscensor(int destino) {
-        System.out.println("[CONTROL] Moviendo ascensor hacia piso " + destino + "...");
-        ascensor.irAPiso(destino);
+    private boolean debeParar(int piso, String direccion) {
+        if (destinosInternos.contains(piso)) return true;
+        if (direccion.equals("ARRIBA") && solicitudesExternasSubir.contains(piso)) return true;
+        if (direccion.equals("ABAJO") && solicitudesExternasBajar.contains(piso)) return true;
+        if (direccion.equals("ARRIBA") && !hayMasArriba(piso) && solicitudesExternasBajar.contains(piso)) return true;
+        if (direccion.equals("ABAJO") && !hayMasAbajo(piso) && solicitudesExternasSubir.contains(piso)) return true;
+        return false;
+    }
+
+    private boolean haySolicitudesEnDireccion(String direccion) {
+        int actual = ascensor.getPisoActual();
+        if (direccion.equals("ARRIBA")) return hayMasArriba(actual);
+        if (direccion.equals("ABAJO")) return hayMasAbajo(actual);
+        return false;
+    }
+    
+    private boolean hayMasArriba(int pisoRef) {
+        for (int p : destinosInternos) if (p > pisoRef) return true;
+        for (int p : solicitudesExternasSubir) if (p > pisoRef) return true;
+        for (int p : solicitudesExternasBajar) if (p > pisoRef) return true; 
+        return false;
+    }
+
+    private boolean hayMasAbajo(int pisoRef) {
+        for (int p : destinosInternos) if (p < pisoRef) return true;
+        for (int p : solicitudesExternasSubir) if (p < pisoRef) return true; 
+        for (int p : solicitudesExternasBajar) if (p < pisoRef) return true; 
+        return false;
+    }
+    
+    private void atenderSolicitud(int piso, String direccion) {
+        System.out.println("*** LLEGADA AL PISO " + piso + " ***");
+        ascensor.abrirPuertas();
+        
+        if (destinosInternos.contains(piso)) {
+            destinosInternos.remove((Integer) piso);
+            ascensor.apagarBoton(piso); // APAGA LUZ INTERNA
+        }
+
+        Piso pisoObj = pisos[piso - 1];
+        boolean atendioAlgo = false;
+        
+        if (direccion.equals("ARRIBA") && solicitudesExternasSubir.contains(piso)) {
+            solicitudesExternasSubir.remove((Integer) piso);
+            pisoObj.getBotonSubir().reiniciar(); // APAGA LUZ EXTERNA
+            atendioAlgo = true;
+        }
+        if (direccion.equals("ABAJO") && solicitudesExternasBajar.contains(piso)) {
+            solicitudesExternasBajar.remove((Integer) piso);
+            pisoObj.getBotonBajar().reiniciar(); // APAGA LUZ EXTERNA
+            atendioAlgo = true;
+        }
+        
+        if (!atendioAlgo) {
+             if (solicitudesExternasBajar.contains(piso)) {
+                 solicitudesExternasBajar.remove((Integer) piso);
+                 pisoObj.getBotonBajar().reiniciar();
+             } else if (solicitudesExternasSubir.contains(piso)) {
+                 solicitudesExternasSubir.remove((Integer) piso);
+                 pisoObj.getBotonSubir().reiniciar();
+             }
+        }
+
+        try { Thread.sleep(1000); } catch (InterruptedException e) {} 
+        ascensor.cerrarPuertas();
     }
 }

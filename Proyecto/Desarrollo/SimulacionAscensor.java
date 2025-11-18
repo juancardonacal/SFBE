@@ -4,82 +4,157 @@ public class SimulacionAscensor {
     public static void main(String[] args) {
 
         Scanner input = new Scanner(System.in);
-
-        // -----------------------------------------
-        // 1. Elegir piso inicial del ascensor
-        // -----------------------------------------
-        int pisoInicial;
-
-        do {
-            System.out.print("Ingrese el piso inicial del ascensor (1-5): ");
-            pisoInicial = input.nextInt();
-
-            if (pisoInicial < 1 || pisoInicial > 5) {
-                System.out.println("Piso inválido. Debe estar entre 1 y 5.");
-            }
-
-        } while (pisoInicial < 1 || pisoInicial > 5);
-
-        // Crear ascensor y sistema de control
+        
+        // Configuración del edificio
+        Piso[] edificio = new Piso[5]; 
+        for (int i = 0; i < 5; i++) {
+            edificio[i] = new Piso(i + 1); 
+        }
+        
+        int pisoInicial = 1;
         Ascensor ascensor = new Ascensor(pisoInicial);
-        SistemaControl sistemaControl = new SistemaControl(ascensor);
+        SistemaControl sistemaControl = new SistemaControl(ascensor, edificio);
 
-        System.out.println("\nAscensor iniciado en el piso " + pisoInicial + ".\n");
-
+        // Variables de estado
+        boolean dentroDelAscensor = false; 
+        int miPisoActual = 1; 
         int opcion;
 
-        // -----------------------------------------
-        // 2. Menú principal
-        // -----------------------------------------
+        System.out.println("Simulación iniciada.");
+
+        // Bucle principal
         do {
-            System.out.println("\n--- MENÚ PRINCIPAL ---");
-            System.out.println("1. Solicitar ascensor (botones del piso)");
-            System.out.println("2. Entrar al ascensor y elegir destino");
-            System.out.println("3. Salir del programa");
-            System.out.print("Seleccione una opción: ");
+            if (!dentroDelAscensor) {
+                // ------------------------------------------------
+                // MENÚ FUERA DEL ASCENSOR (Adaptativo por piso)
+                // ------------------------------------------------
+                System.out.println("\n--- ESTÁS EN EL PISO " + miPisoActual + " (FUERA) ---");
+                System.out.println("[Ascensor está en piso: " + ascensor.getPisoActual() + "]");
 
-            opcion = input.nextInt();
+                // CASO 1: ESTAMOS EN EL PISO 1 (Solo subir)
+                if (miPisoActual == 1) {
+                    System.out.println("1. Llamar para SUBIR");
+                    System.out.println("2. Esperar (sirve para que el ascensor procese solicitudes)");
+                    System.out.println("3. Entrar al ascensor");
+                    System.out.println("4. Caminar a otro piso");
+                    System.out.println("5. Salir");
+                    System.out.print("Opción: ");
+                    
+                    if (input.hasNextInt()) {
+                        opcion = input.nextInt();
+                        switch (opcion) {
+                            case 1: sistemaControl.presionarSubir(miPisoActual); break;
+                            case 2: sistemaControl.procesar(); break;
+                            case 3: intentarEntrar(ascensor, miPisoActual); dentroDelAscensor = (ascensor.getPisoActual() == miPisoActual); break;
+                            case 4: miPisoActual = caminar(input); break;
+                            case 5: return;
+                            default: System.out.println("Opción no válida.");
+                        }
+                    } else { input.next(); }
 
-            switch (opcion) {
+                // CASO 2: ESTAMOS EN EL PISO 5 (Solo bajar)
+                } else if (miPisoActual == 5) {
+                    System.out.println("1. Llamar para BAJAR");
+                    System.out.println("2. Esperar (sirve para que el ascensor procese solicitudes)");
+                    System.out.println("3. Entrar al ascensor");
+                    System.out.println("4. Caminar a otro piso");
+                    System.out.println("5. Salir");
+                    System.out.print("Opción: ");
 
-                case 1: // Solicitud externa
-                    System.out.print("¿En qué piso está usted? (1-5): ");
-                    int piso = input.nextInt();
+                    if (input.hasNextInt()) {
+                        opcion = input.nextInt();
+                        switch (opcion) {
+                            case 1: sistemaControl.presionarBajar(miPisoActual); break;
+                            case 2: sistemaControl.procesar(); break;
+                            case 3: intentarEntrar(ascensor, miPisoActual); dentroDelAscensor = (ascensor.getPisoActual() == miPisoActual); break;
+                            case 4: miPisoActual = caminar(input); break;
+                            case 5: return;
+                            default: System.out.println("Opción no válida.");
+                        }
+                    } else { input.next(); }
 
-                    System.out.print("¿Desea subir (1) o bajar (2)? ");
-                    int dir = input.nextInt();
+                // CASO 3: PISOS INTERMEDIOS (Subir y Bajar)
+                } else {
+                    System.out.println("1. Llamar para SUBIR");
+                    System.out.println("2. Llamar para BAJAR");
+                    System.out.println("3. Esperar (sirve para que el ascensor procese solicitudes)");
+                    System.out.println("4. Entrar al ascensor");
+                    System.out.println("5. Caminar a otro piso");
+                    System.out.println("6. Salir");
+                    System.out.print("Opción: ");
 
-                    if (dir == 1) {
-                        sistemaControl.presionarSubir(piso);
-                    } else if (dir == 2) {
-                        sistemaControl.presionarBajar(piso);
-                    } else {
-                        System.out.println("Dirección inválida.");
-                        break;
+                    if (input.hasNextInt()) {
+                        opcion = input.nextInt();
+                        switch (opcion) {
+                            case 1: sistemaControl.presionarSubir(miPisoActual); break;
+                            case 2: sistemaControl.presionarBajar(miPisoActual); break;
+                            case 3: sistemaControl.procesar(); break;
+                            case 4: intentarEntrar(ascensor, miPisoActual); dentroDelAscensor = (ascensor.getPisoActual() == miPisoActual); break;
+                            case 5: miPisoActual = caminar(input); break;
+                            case 6: return;
+                            default: System.out.println("Opción no válida.");
+                        }
+                    } else { input.next(); }
+                }
+
+            } else {
+                // ------------------------------------------------
+                // MENÚ DENTRO DEL ASCENSOR
+                // ------------------------------------------------
+                System.out.println("\n--- ESTÁS DENTRO DEL ASCENSOR (Piso actual: " + ascensor.getPisoActual() + ") ---");
+                System.out.println("1. Seleccionar piso destino");
+                System.out.println("2. Mantener puertas abiertas");
+                System.out.println("3. Poner/Quitar obstáculo");
+                System.out.println("4. Esperar (sirve para que el ascensor procese solicitudes)");
+                System.out.println("5. Salir del ascensor");
+                System.out.print("Opción: ");
+
+                if (input.hasNextInt()) {
+                    opcion = input.nextInt();
+                    switch (opcion) {
+                        case 1:
+                            System.out.print("Destino (1-5): ");
+                            int destino = input.nextInt();
+                            sistemaControl.presionarInterno(destino);
+                            break;
+                        case 2: sistemaControl.presionarMantenerPuertasAbiertas(); break;
+                        case 3: 
+                            boolean estado = ascensor.unObstaculoEnLaPuerta();
+                            ascensor.simularObstaculo(!estado);
+                            break;
+                        case 4: sistemaControl.procesar(); break;
+                        case 5:
+                            miPisoActual = ascensor.getPisoActual();
+                            dentroDelAscensor = false;
+                            System.out.println("Has salido en el piso " + miPisoActual);
+                            break;
+                        default: System.out.println("Opción no válida.");
                     }
-
-                    sistemaControl.procesar();
-                    break;
-
-
-                case 2: // Botones internos del ascensor
-                    System.out.print("¿A qué piso desea ir? (1-5): ");
-                    int destino = input.nextInt();
-
-                    sistemaControl.presionarInterno(destino);
-                    sistemaControl.procesar();
-                    break;
-
-
-                case 3:
-                    System.out.println("Saliendo del programa...");
-                    input.close();
-                    return;
-
-                default:
-                    System.out.println("Opción inválida.");
+                } else { input.next(); }
             }
 
         } while (true);
+    }
+
+    // Métodos auxiliares para limpiar el main
+    public static void intentarEntrar(Ascensor ascensor, int miPiso) {
+        if (ascensor.getPisoActual() == miPiso) {
+            System.out.println("Has entrado al ascensor.");
+        } else {
+            System.out.println(">>> NO PUEDES ENTRAR. El ascensor está en el piso " + ascensor.getPisoActual());
+        }
+    }
+
+    public static int caminar(Scanner input) {
+        System.out.print("¿A qué piso vas caminando? (1-5): ");
+        if (input.hasNextInt()) {
+            int p = input.nextInt();
+            if (p >= 1 && p <= 5) {
+                System.out.println("Caminaste al piso " + p);
+                return p;
+            }
+        }
+        System.out.println("Piso inválido.");
+        return 1; // Retorno por defecto si falla
     }
 }
